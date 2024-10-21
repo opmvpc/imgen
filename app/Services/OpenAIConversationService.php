@@ -2,19 +2,29 @@
 
 namespace App\Services;
 
-use OpenAI\Laravel\Facades\OpenAI;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use OpenAI;
 
 class OpenAIConversationService
 {
     private $baseUrl;
     private $apiKey;
+    private $client;
 
     public function __construct()
     {
         $this->baseUrl = config('services.openrouter.base_url', 'https://openrouter.ai/api/v1');
         $this->apiKey = config('services.openrouter.api_key');
+        $this->client = $this->createOpenAIClient();
+    }
+
+    private function createOpenAIClient()
+    {
+        return OpenAI::factory()
+            ->withApiKey($this->apiKey)
+            ->withBaseUri($this->baseUrl)
+            ->make();
     }
 
     public function getModels()
@@ -37,7 +47,7 @@ class OpenAIConversationService
 
         $maxTokens = $models[$model];
 
-        $stream = OpenAI::client($this->apiKey, $this->baseUrl)->chat()->createStreamed([
+        $stream = $this->client->chat()->createStreamed([
             'model' => $model,
             'messages' => $messages,
             'temperature' => $temperature,

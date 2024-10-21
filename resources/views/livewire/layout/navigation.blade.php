@@ -17,7 +17,7 @@ $logout = function (Logout $logout) {
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" wire:navigate>
+                    <a href="{{ route('projects') }}" wire:navigate>
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
                     </a>
                 </div>
@@ -25,8 +25,8 @@ $logout = function (Logout $logout) {
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('projects')" :active="request()->routeIs('projects')">
-    {{ __('Mes Conversations') }}
-</x-nav-link>
+                    {{ __('Mes Conversations') }}
+                </x-nav-link>
                 </div>
             </div>
 
