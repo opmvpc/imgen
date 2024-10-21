@@ -1,0 +1,204 @@
+
+# Règles du projet
+
+## Description du projet
+
+Interface de chat permettant aux utilisateurs de générer des images en interagissant avec différents modèles d'IA générative textuelle. Le processus est itératif :
+
+1. L'utilisateur demande une image
+2. L'IA génère un prompt pour l'image
+3. L'image est générée avec le modèle Flux-1 via Replicate
+4. L'utilisateur donne son feedback
+5. L'IA analyse l'image et le feedback
+6. L'IA crée un nouveau prompt pour améliorer le résultat
+7. Le processus se répète jusqu'à satisfaction de l'utilisateur
+
+Chaque conversation = un projet distinct. Images regroupées par projet.
+
+## Stack technique
+
+- Backend : Laravel 11
+- Frontend : Livewire 3 avec Volt (API fonctionnelle)
+- Génération d'images : Replicate (modèle Flux-1)
+- IA conversationnelle : OpenRouter
+- Intégration OpenAI : OpenAI PHP Client
+
+## Règles à respecter
+
+1. Utiliser Laravel 11 comme framework backend
+2. Implémenter l'interface avec Livewire 3 et Volt (API fonctionnelle)
+3. Utiliser OpenRouter pour les modèles d'IA conversationnelle
+4. Utiliser Replicate pour la génération d'images (Flux-1)
+5. Intégrer l'OpenAI PHP Client pour fonctionnalités supplémentaires
+6. Organiser conversations et images par projet
+7. Processus itératif pour amélioration des prompts et images
+
+## Exemples de code
+
+### Composant Volt pour le chat
+
+```php
+<?php
+
+use function Livewire\Volt\{state, computed, action};
+use App\Services\OpenRouterService;
+use App\Services\ReplicateService;
+
+state([
+    'messages' => [],
+    'newMessage' => '',
+    'currentImage' => null,
+]);
+
+$sendMessage = action(function () {
+    $this->messages[] = [
+        'content' => $this->newMessage,
+        'is_user' => true,
+    ];
+    $this->newMessage = '';
+
+    // Générer réponse avec OpenRouter
+    $aiResponse = app(OpenRouterService::class)->generateResponse(end($this->messages)['content']);
+    $this->messages[] = [
+        'content' => $aiResponse,
+        'is_user' => false,
+    ];
+
+    // Générer image avec Replicate
+    $this->currentImage = app(ReplicateService::class)->generateImage($aiResponse);
+});
+
+$regenerateImage = action(function () {
+    $this->currentImage = app(ReplicateService::class)->generateImage(end($this->messages)['content']);
+});
+
+?>
+
+<div>
+    @foreach ($messages as $message)
+        <div class="{{ $message['is_user'] ? 'user-message' : 'ai-message' }}">
+            {{ $message['content'] }}
+        </div>
+    @endforeach
+
+    @if ($currentImage)
+        <img src="{{ $currentImage }}" alt="Generated Image">
+        <button wire:click="regenerateImage">Régénérer l'image</button>
+    @endif
+
+    <form wire:submit.prevent="sendMessage">
+        <input type="text" wire:model="newMessage">
+        <button type="submit">Envoyer</button>
+    </form>
+</div>
+```
+
+### Service pour OpenRouter
+
+```php
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+
+class OpenRouterService
+{
+    public function generateResponse($prompt)
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.openrouter.api_key'),
+        ])->post('https://openrouter.ai/api/v1/chat/completions', [
+            'model' => 'openai/gpt-3.5-turbo',
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+        ]);
+
+        return $response->json()['choices'][0]['message']['content'];
+    }
+}
+```
+
+### Service pour Replicate
+
+```php
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+
+class ReplicateService
+{
+    public function generateImage($prompt)
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Token ' . config('services.replicate.api_key'),
+        ])->post('https://api.replicate.com/v1/predictions', [
+            'version' => 'flux-1',
+            'input' => ['prompt' => $prompt],
+        ]);
+
+        return $response->json()['output'];
+    }
+}
+```
+
+### Configuration des services
+
+Dans `config/services.php` :
+
+```php
+return [
+    // ...
+
+    'openrouter' => [
+        'api_key' => env('OPENROUTER_API_KEY'),
+    ],
+
+    'replicate' => [
+        'api_key' => env('REPLICATE_API_KEY'),
+    ],
+
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+    ],
+];
+```
+
+### Intégration de l'OpenAI PHP Client
+
+```php
+<?php
+
+namespace App\Services;
+
+use OpenAI\Client;
+
+class OpenAIService
+{
+    private $client;
+
+    public function __construct()
+    {
+        $this->client = OpenAI::client(config('services.openai.api_key'));
+    }
+
+    public function analyzeImage($imageUrl)
+    {
+        $response = $this->client->chat()->create([
+            'model' => 'gpt-4-vision-preview',
+            'messages' => [
+                ['role' => 'user', 'content' => [
+                    ['type' => 'text', 'text' => 'Analyze this image:'],
+                    ['type' => 'image_url', 'image_url' => ['url' => $imageUrl]],
+                ]],
+            ],
+        ]);
+
+        return $response->choices[0]->message->content;
+    }
+}
+```
+
