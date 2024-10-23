@@ -39,7 +39,7 @@
     <!-- Main Chat Area -->
     <div class="flex-1 flex flex-col bg-gray-50">
         <!-- Messages -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages">
             @foreach ($messages as $message)
                 <div class="flex {{ $message['role'] === 'user' ? 'justify-end' : 'justify-start' }}">
                     <div
@@ -66,29 +66,25 @@
                 </div>
             @endforeach
 
-            @if ($streamedResponse)
-                <div class="flex justify-start">
-                    <div class="flex flex-col items-start">
-                        <span class="text-xs text-gray-500 mb-1">Assistant</span>
-                        <div class="max-w-[70%] bg-white rounded-lg p-4 shadow">
-                            <p class="text-sm">{{ $streamedResponse }}</p>
-                        </div>
+
+            <div class="flex justify-start">
+                <div class="flex flex-col items-start">
+                    <span class="text-xs text-gray-500 mb-1">Assistant</span>
+                    <div class="max-w-[70%] bg-white rounded-lg p-4 shadow">
+                        <p class="text-sm" wire:stream="streamedResponse"></p>
                     </div>
                 </div>
-            @endif
+            </div>
+
         </div>
 
         <!-- Input Area -->
         <div class="border-t border-gray-100 p-4 bg-white">
             <form wire:submit.prevent="sendMessage" class="flex gap-4">
                 <div class="flex-1 space-y-2">
-                    <textarea
-                        wire:model="newMessage"
-                        placeholder="Entrez votre message"
-                        rows="1"
+                    <textarea wire:model="newMessage" placeholder="Entrez votre message" rows="1"
                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 resize-none"
-                        style="min-height: 2.5rem; max-height: 15rem; overflow-y: hidden;"
-                        x-data="{
+                        style="min-height: 2.5rem; max-height: 15rem; overflow-y: hidden;" x-data="{
                             resize: function() {
                                 $el.style.height = '2.5rem';
                                 $el.style.height = $el.scrollHeight + 'px';
@@ -98,11 +94,8 @@
                                     $el.style.overflowY = 'hidden';
                                 }
                             }
-                        }"
-                        x-init="resize()"
-                        @input="resize()"
-                        @keydown.ctrl.enter.prevent="$wire.sendMessage()"
-                    ></textarea>
+                        }" x-init="resize()"
+                        @input="resize()" @keydown.ctrl.enter.prevent="$wire.sendMessage()"></textarea>
                 </div>
 
                 <button type="submit"
@@ -116,9 +109,11 @@
 
 <script>
     document.addEventListener('livewire:initialized', () => {
-        @this.on('updateStreamedResponse', (response) => {
-            const messagesContainer = document.querySelector('.overflow-y-auto');
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        @this.on('scroll-chat', () => {
+            const messagesContainer = document.getElementById('chat-messages');
+            setTimeout(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 100);
         });
     });
 </script>

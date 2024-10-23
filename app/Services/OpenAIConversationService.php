@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use OpenAI\Responses\StreamResponse;
+use Illuminate\Support\Facades\Log;
 
 class OpenAIConversationService
 {
@@ -45,27 +47,49 @@ class OpenAIConversationService
         });
     }
 
-    public function streamConversation($messages, $model = null, $temperature = 0.7)
+    public function streamConversation($messages, $model = null, $temperature = 0.7, callable $callback = null): string
     {
-        $models = $this->getModels();
-        if (!$model || !isset($models[$model])) {
-            $model = array_key_first($models);
-        }
+        try {
+            logger()->info('Début streamConversation', [
+                'model' => $model,
+                'temperature' => $temperature
+            ]);
 
-        $maxTokens = $models[$model];
-
-        $stream = $this->client->chat()->createStreamed([
-            'model' => $model,
-            'messages' => $messages,
-            'temperature' => $temperature,
-            'max_tokens' => 4096,
-        ]);
-
-        foreach ($stream as $response) {
-            $content = $response->choices[0]->delta->content;
-            if (null !== $content) {
-                yield $content;
+            $models = $this->getModels();
+            if (!$model || !isset($models[$model])) {
+                $model = array_key_first($models);
+                logger()->info('Modèle par défaut utilisé:', ['model' => $model]);
             }
+
+            $stream = $this->client->chat()->createStreamed([
+                'model' => $model,
+                'messages' => $messages,
+                'temperature' => $temperature,
+                'max_tokens' => 4096,
+            ]);
+
+            logger()->info('Stream créé');
+
+            $fullResponse = '';
+            foreach ($stream as $response) {
+                $text = $response->choices[0]->delta->content;
+                if ($text) {
+                    logger()->info('Chunk reçu dans le service:', ['text' => $text]);
+                    if ($callback) {
+                        $callback($text);
+                    }
+                    $fullResponse .= $text;
+                }
+            }
+
+            logger()->info('Stream terminé', ['fullResponse' => $fullResponse]);
+            return $fullResponse;
+        } catch (\Exception $e) {
+            logger()->error('Erreur dans streamConversation:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
     }
 
