@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
 
 class OpenAIConversationService
 {
@@ -30,6 +29,7 @@ class OpenAIConversationService
                     return isset($model['architecture']['modality'])
                         && 'text+image->text' === $model['architecture']['modality'];
                 })
+                ->sortBy('name')
                 ->map(function ($model) {
                     return [
                         'id' => $model['id'],
