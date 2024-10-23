@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use App\Services\OpenAIConversationService;
 use App\Models\Project;
+use App\Services\OpenAIConversationService;
+use Livewire\Component;
 
 class ChatConversation extends Component
 {
@@ -13,18 +13,31 @@ class ChatConversation extends Component
     public $newMessage = '';
     public $streamedResponse = '';
     public $temperature = 0.7;
-    public $selectedModel = null;
+    public $selectedModel;
     public $imageUrl = '';
 
-    public function mount($project = null)
+    public function mount(?Project $project)
     {
-        $this->project = $project;
+        if ($project) {
+            $this->project = $project;
+            $this->messages = $this->project->messages()
+                ->orderBy('created_at')
+                ->get()
+                ->map(function ($message) {
+                    return [
+                        'role' => $message->role,
+                        'content' => json_decode($message->content, true) ?? $message->content,
+                    ];
+                })
+                ->toArray()
+            ;
+        }
     }
 
     public function sendMessage()
     {
-        if (!$this->project) {
-            $this->createProject();
+        if (empty($this->newMessage)) {
+            return;
         }
 
         $content = $this->newMessage;
@@ -35,18 +48,28 @@ class ChatConversation extends Component
             ];
         }
 
-        $this->messages[] = ['role' => 'user', 'content' => $content];
+        $isNewProject = null === $this->project->id;
+        if ($isNewProject) {
+            $this->createProject();
+        }
+
+        $message = $this->project->messages()->create([
+            'role' => 'user',
+            'content' => json_encode($content),
+        ]);
+
+        $this->messages[] = [
+            'role' => 'user',
+            'content' => $content,
+        ];
+
         $this->newMessage = '';
         $this->imageUrl = '';
 
+        if ($isNewProject) {
+            redirect()->route('chat', $this->project);
+        }
         $this->streamResponse();
-    }
-
-    private function createProject()
-    {
-        $this->project = auth()->user()->projects()->create([
-            'name' => 'Nouvelle conversation ' . now()->format('Y-m-d H:i:s'),
-        ]);
     }
 
     public function streamResponse()
@@ -59,11 +82,17 @@ class ChatConversation extends Component
             $this->dispatch('updateStreamedResponse', $this->streamedResponse);
         }
 
-        $this->messages[] = ['role' => 'assistant', 'content' => $this->streamedResponse];
-        $this->streamedResponse = '';
+        $this->messages[] = [
+            'role' => 'assistant',
+            'content' => $this->streamedResponse,
+        ];
 
-        // Sauvegarder les messages dans le projet
-        $this->project->messages()->createMany($this->messages);
+        $this->project->messages()->create([
+            'role' => 'assistant',
+            'content' => $this->streamedResponse,
+        ]);
+
+        $this->streamedResponse = '';
     }
 
     public function render()
@@ -73,6 +102,13 @@ class ChatConversation extends Component
 
         return view('livewire.chat-conversation', [
             'models' => $models,
+        ]);
+    }
+
+    private function createProject()
+    {
+        $this->project = auth()->user()->projects()->create([
+            'name' => 'Nouvelle conversation '.now()->format('Y-m-d H:i:s'),
         ]);
     }
 }

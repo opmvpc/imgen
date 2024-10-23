@@ -28,28 +28,35 @@
         <div class="flex-1 overflow-y-auto p-4 space-y-4">
             @foreach ($messages as $message)
                 <div class="flex {{ $message['role'] === 'user' ? 'justify-end' : 'justify-start' }}">
-                    <div
-                        class="max-w-[70%] {{ $message['role'] === 'user' ? 'bg-indigo-500 text-white' : 'bg-white' }} rounded-lg p-4 shadow">
-                        @if (is_array($message['content']))
-                            @foreach ($message['content'] as $content)
-                                @if ($content['type'] === 'text')
-                                    <p class="text-sm">{{ $content['text'] }}</p>
-                                @elseif ($content['type'] === 'image_url')
-                                    <img src="{{ $content['image_url']['url'] }}" alt="Image"
-                                        class="rounded-lg max-w-full h-auto my-2">
-                                @endif
-                            @endforeach
-                        @else
-                            <p class="text-sm">{{ $message['content'] }}</p>
-                        @endif
+                    <div class="flex flex-col {{ $message['role'] === 'user' ? 'items-end' : 'items-start' }} max-w-[70%]">
+                        <span class="text-xs text-gray-500 mb-1">
+                            {{ $message['role'] === 'user' ? 'Vous' : 'Assistant' }}
+                        </span>
+                        <div class="w-full {{ $message['role'] === 'user' ? 'bg-indigo-500 text-white' : 'bg-white' }} rounded-lg p-4 shadow break-words">
+                            @if (is_array($message['content']))
+                                @foreach ($message['content'] as $content)
+                                    @if ($content['type'] === 'text')
+                                        <p class="text-sm whitespace-pre-wrap">{{ $content['text'] }}</p>
+                                    @elseif ($content['type'] === 'image_url')
+                                        <img src="{{ $content['image_url']['url'] }}" alt="Image"
+                                            class="rounded-lg max-w-full h-auto my-2">
+                                    @endif
+                                @endforeach
+                            @else
+                                <p class="text-sm whitespace-pre-wrap">{{ $message['content'] }}</p>
+                            @endif
+                        </div>
                     </div>
                 </div>
             @endforeach
 
             @if ($streamedResponse)
                 <div class="flex justify-start">
-                    <div class="max-w-[70%] bg-white rounded-lg p-4 shadow">
-                        <p class="text-sm">{{ $streamedResponse }}</p>
+                    <div class="flex flex-col items-start">
+                        <span class="text-xs text-gray-500 mb-1">Assistant</span>
+                        <div class="max-w-[70%] bg-white rounded-lg p-4 shadow">
+                            <p class="text-sm">{{ $streamedResponse }}</p>
+                        </div>
                     </div>
                 </div>
             @endif
