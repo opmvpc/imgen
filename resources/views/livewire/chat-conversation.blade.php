@@ -67,11 +67,22 @@
             @endforeach
 
 
-            <div class="flex justify-start">
+            <div wire:loading class="flex justify-start">
                 <div class="flex flex-col items-start">
                     <span class="text-xs text-gray-500 mb-1">Assistant</span>
                     <div class="max-w-[70%] bg-white rounded-lg p-4 shadow">
-                        <p class="text-sm" wire:stream="streamedResponse"></p>
+                        <p id="streaming-response" class="text-sm" wire:stream="streamedResponse"></p>
+                        <div id="loading-indicator" class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <span class="text-gray-500">L'assistant réfléchit...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -109,11 +120,35 @@
 
 <script>
     document.addEventListener('livewire:initialized', () => {
+        // Gestion du scroll
         @this.on('scroll-chat', () => {
             const messagesContainer = document.getElementById('chat-messages');
             setTimeout(() => {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }, 100);
+        });
+
+        // Gestion du loader
+        const streamingResponse = document.getElementById('streaming-response');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'characterData' || mutation.type === 'childList') {
+                    const hasContent = streamingResponse.textContent.trim().length > 0;
+                    loadingIndicator.style.display = hasContent ? 'none' : 'flex';
+                }
+            });
+        });
+
+        observer.observe(streamingResponse, {
+            characterData: true,
+            childList: true,
+            subtree: true
+        });
+
+        @this.on('stream-ended', () => {
+            observer.disconnect();
         });
     });
 </script>

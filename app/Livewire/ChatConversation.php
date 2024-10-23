@@ -9,6 +9,7 @@ use Livewire\Component;
 class ChatConversation extends Component
 {
     public Project $project;
+    public bool $isStreaming = false;
 
     /** @var array<array{role: string, content: array|string}> */
     public array $messages = [];
@@ -16,7 +17,6 @@ class ChatConversation extends Component
     public string $streamedResponse = '';
     public float $temperature = 0.7;
     public ?string $selectedModel = null;
-    public bool $isStreaming = false;
 
     public function mount(Project $project)
     {
@@ -70,6 +70,8 @@ class ChatConversation extends Component
     {
         try {
             $this->isStreaming = true;
+            $this->dispatch('stream-started');
+
             logger()->info('Début getAiResponse');
             $openAIService = new OpenAIConversationService();
 
@@ -97,16 +99,18 @@ class ChatConversation extends Component
                 'content' => $fullResponse,
             ]);
 
-            $this->isStreaming = false;
             $this->streamedResponse = '';
+            $this->isStreaming = false;
+            $this->dispatch('stream-ended');
             $this->dispatch('scroll-chat');
+
         } catch (\Exception $e) {
+            $this->isStreaming = false;
+            $this->dispatch('stream-ended');
             logger()->error('Erreur dans getAiResponse:', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-        } finally {
-            $this->isStreaming = false;
         }
     }
 
