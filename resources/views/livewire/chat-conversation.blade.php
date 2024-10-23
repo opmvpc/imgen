@@ -4,20 +4,34 @@
         <div class="p-4 space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Modèle</label>
-                <select wire:model="selectedModel"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    @foreach ($models as $model)
-                        <option value="{{ $model['id'] }}">{{ $model['name'] }}</option>
-                    @endforeach
-                </select>
+                <div class="relative">
+                    <select wire:model.live="selectedModel"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        @foreach ($models as $model)
+                            <option value="{{ $model['id'] }}">{{ $model['name'] }}</option>
+                        @endforeach
+                    </select>
+                    <div class="absolute right-0 -bottom-5">
+                        <x-action-message on="model-updated" class="text-xs text-green-500">
+                            Sauvegardé
+                        </x-action-message>
+                    </div>
+                </div>
             </div>
 
-            <div>
+            <div class="mt-8">
                 <label class="block text-sm font-medium text-gray-700 mb-1">
                     Température: {{ $temperature }}
                 </label>
-                <input type="range" wire:model.live="temperature" min="0" max="2" step="0.1"
-                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <div class="relative">
+                    <input type="range" wire:model.live="temperature" min="0" max="2" step="0.1"
+                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="absolute right-0 -bottom-5">
+                        <x-action-message on="temperature-updated" class="text-xs text-green-500">
+                            Sauvegardé
+                        </x-action-message>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

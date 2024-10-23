@@ -8,13 +8,14 @@ use Livewire\Component;
 
 class ChatConversation extends Component
 {
-    public $project;
-    public $messages = [];
-    public $newMessage = '';
-    public $streamedResponse = '';
-    public $temperature = 0.7;
-    public $selectedModel;
-    public $imageUrl = '';
+    public Project $project;
+    /** @var array<array{role: string, content: string|array}> */
+    public array $messages = [];
+    public string $newMessage = '';
+    public string $streamedResponse = '';
+    public float $temperature = 0.7;
+    public ?string $selectedModel = null;
+    public string $imageUrl = '';
 
     public function mount(?Project $project)
     {
@@ -31,6 +32,12 @@ class ChatConversation extends Component
                 })
                 ->toArray()
             ;
+
+            // Charger les paramètres du projet
+            if ($settings = $project->settings) {
+                $this->selectedModel = $settings->model;
+                $this->temperature = $settings->temperature;
+            }
         }
     }
 
@@ -105,10 +112,38 @@ class ChatConversation extends Component
         ]);
     }
 
+    public function updatedSelectedModel($value)
+    {
+        if ($this->project->id) {
+            $this->project->settings()->updateOrCreate(
+                [],
+                ['model' => $value]
+            );
+            $this->dispatch('model-updated');
+        }
+    }
+
+    public function updatedTemperature($value)
+    {
+        if ($this->project->id) {
+            $this->project->settings()->updateOrCreate(
+                [],
+                ['temperature' => $value]
+            );
+            $this->dispatch('temperature-updated');
+        }
+    }
+
     private function createProject()
     {
         $this->project = auth()->user()->projects()->create([
             'name' => 'Nouvelle conversation '.now()->format('Y-m-d H:i:s'),
+        ]);
+
+        // Créer les paramètres par défaut
+        $this->project->settings()->create([
+            'model' => $this->selectedModel,
+            'temperature' => $this->temperature,
         ]);
     }
 }
