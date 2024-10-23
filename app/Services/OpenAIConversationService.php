@@ -4,7 +4,6 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-use OpenAI;
 
 class OpenAIConversationService
 {
@@ -19,22 +18,30 @@ class OpenAIConversationService
         $this->client = $this->createOpenAIClient();
     }
 
-    private function createOpenAIClient()
-    {
-        return OpenAI::factory()
-            ->withApiKey($this->apiKey)
-            ->withBaseUri($this->baseUrl)
-            ->make();
-    }
-
     public function getModels()
     {
-        return Cache::remember('openrouter_models', 3600, function () {
+        return cache()->remember('openai.models', now()->addHour(), function () {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-            ])->get($this->baseUrl . '/models');
+                'Authorization' => 'Bearer '.$this->apiKey,
+            ])->get($this->baseUrl.'/models');
 
-            return collect($response->json()['data'])->pluck('id', 'context_length')->toArray();
+            return collect($response->json()['data'])
+                ->filter(function ($model) {
+                    return isset($model['architecture']['modality'])
+                        && 'text+image->text' === $model['architecture']['modality'];
+                })
+                ->map(function ($model) {
+                    return [
+                        'id' => $model['id'],
+                        'name' => $model['name'],
+                        'context_length' => $model['context_length'],
+                        'max_completion_tokens' => $model['top_provider']['max_completion_tokens'],
+                        'pricing' => $model['pricing'],
+                    ];
+                })
+                ->values()
+                ->all()
+            ;
         });
     }
 
@@ -51,14 +58,23 @@ class OpenAIConversationService
             'model' => $model,
             'messages' => $messages,
             'temperature' => $temperature,
-            'max_tokens' => $maxTokens,
+            'max_tokens' => 4096,
         ]);
 
         foreach ($stream as $response) {
             $content = $response->choices[0]->delta->content;
-            if ($content !== null) {
+            if (null !== $content) {
                 yield $content;
             }
         }
+    }
+
+    private function createOpenAIClient()
+    {
+        return \OpenAI::factory()
+            ->withApiKey($this->apiKey)
+            ->withBaseUri($this->baseUrl)
+            ->make()
+        ;
     }
 }
