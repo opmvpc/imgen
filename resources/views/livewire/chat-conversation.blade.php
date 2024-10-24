@@ -108,13 +108,22 @@
     document.addEventListener('livewire:initialized', () => {
         const streamingResponse = document.getElementById('streaming-response');
         const loadingIndicator = document.getElementById('loading-indicator');
+        const SCROLL_OFFSET = 100; // Offset en pixels
 
-        const observer = new MutationObserver(() => {
-            // Scroll en bas de la fenêtre
+        // Fonction de scroll avec offset
+        const scrollToBottom = () => {
             window.scrollTo({
-                top: document.documentElement.scrollHeight,
+                top: document.documentElement.scrollHeight + SCROLL_OFFSET,
                 behavior: 'smooth'
             });
+        };
+
+        // Scroll initial avec délai pour le formatage markdown
+        setTimeout(scrollToBottom, 500);
+
+        const observer = new MutationObserver(() => {
+            // Scroll pendant le streaming
+            scrollToBottom();
 
             // Gestion du loader
             const hasContent = streamingResponse.textContent.trim().length > 0;
