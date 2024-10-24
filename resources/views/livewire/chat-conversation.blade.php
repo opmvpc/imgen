@@ -48,19 +48,13 @@
                             {{ $message['role'] === 'user' ? 'Vous' : 'Assistant' }}
                         </span>
                         <div
-                            class="w-full {{ $message['role'] === 'user' ? 'bg-indigo-500 text-white' : 'bg-white' }} rounded-lg p-4 shadow break-words">
-                            @if (is_array($message['content']))
-                                @foreach ($message['content'] as $content)
-                                    @if ($content['type'] === 'text')
-                                        <p class="text-sm whitespace-pre-wrap">{{ $content['text'] }}</p>
-                                    @elseif ($content['type'] === 'image_url')
-                                        <img src="{{ $content['image_url']['url'] }}" alt="Image"
-                                            class="rounded-lg max-w-full h-auto my-2">
-                                    @endif
-                                @endforeach
-                            @else
-                                <p class="text-sm whitespace-pre-wrap">{{ $message['content'] }}</p>
-                            @endif
+                            class="w-full prose {{ $message['role'] === 'user' ? 'bg-indigo-500 text-white' : 'bg-white' }} rounded-lg p-4 shadow break-words">
+
+                            <p class="text-sm " x-data
+                                x-html="$el.textContent.includes('`') || $el.textContent.includes('*') || $el.textContent.includes('#') ? marked.parse($el.textContent) : $el.textContent">
+                                {{ $message['content'] }}
+                            </p>
+
                         </div>
                     </div>
                 </div>
@@ -71,7 +65,8 @@
                 <div class="flex flex-col items-start">
                     <span class="text-xs text-gray-500 mb-1">Assistant</span>
                     <div class="max-w-[70%] bg-white rounded-lg p-4 shadow">
-                        <p id="streaming-response" class="text-sm" wire:stream="streamedResponse"></p>
+                        <p id="streaming-response" class="text-sm prose" wire:stream="streamedResponse">
+                        </p>
                         <div id="loading-indicator" class="flex items-center gap-2">
                             <x-untitledui-loading-01 class="animate-spin h-4 w-4 text-indigo-500" />
                             <span class="text-gray-500">L'assistant réfléchit...</span>

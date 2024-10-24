@@ -103,7 +103,6 @@ class ChatConversation extends Component
             $this->isStreaming = false;
             $this->dispatch('stream-ended');
             $this->dispatch('scroll-chat');
-
         } catch (\Exception $e) {
             $this->isStreaming = false;
             $this->dispatch('stream-ended');
