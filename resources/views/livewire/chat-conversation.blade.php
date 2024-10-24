@@ -51,10 +51,8 @@
                             class="w-full prose {{ $message['role'] === 'user' ? 'bg-indigo-500 text-white' : 'bg-white' }} rounded-lg p-4 shadow break-words">
 
                             <p class="text-sm " x-data
-                                x-html="$el.textContent.includes('`') || $el.textContent.includes('*') || $el.textContent.includes('#') ? marked.parse($el.textContent) : $el.textContent">
-                                {{ $message['content'] }}
-                            </p>
-
+                                x-html="marked.parseInline($el.textContent.trim()).replace(/^<br>/, '')">
+                                {{ $message['content'] }}</p>
                         </div>
                     </div>
                 </div>
@@ -108,30 +106,24 @@
 
 <script>
     document.addEventListener('livewire:initialized', () => {
-        // Gestion du scroll
-        @this.on('scroll-chat', () => {
-            const messagesContainer = document.getElementById('chat-messages');
-            setTimeout(() => {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }, 100);
-        });
-
-        // Gestion du loader
         const streamingResponse = document.getElementById('streaming-response');
         const loadingIndicator = document.getElementById('loading-indicator');
 
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'characterData' || mutation.type === 'childList') {
-                    const hasContent = streamingResponse.textContent.trim().length > 0;
-                    loadingIndicator.style.display = hasContent ? 'none' : 'flex';
-                }
+        const observer = new MutationObserver(() => {
+            // Scroll en bas de la fenêtre
+            window.scrollTo({
+                top: document.documentElement.scrollHeight,
+                behavior: 'smooth'
             });
+
+            // Gestion du loader
+            const hasContent = streamingResponse.textContent.trim().length > 0;
+            loadingIndicator.style.display = hasContent ? 'none' : 'flex';
         });
 
         observer.observe(streamingResponse, {
-            characterData: true,
             childList: true,
+            characterData: true,
             subtree: true
         });
     });
