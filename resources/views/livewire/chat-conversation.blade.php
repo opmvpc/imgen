@@ -48,11 +48,11 @@
                             {{ $message['role'] === 'user' ? 'Vous' : 'Assistant' }}
                         </span>
                         <div
-                            class="w-full prose {{ $message['role'] === 'user' ? 'bg-indigo-500 text-white' : 'bg-white' }} rounded-lg p-4 shadow break-words">
+                            class="w-full prose {{ $message['role'] === 'user' ? 'bg-indigo-500 text-white prose-invert' : 'bg-white' }} rounded-lg px-4 shadow break-words prose-headings:mt-4">
 
-                            <p class="text-sm " x-data
+                            <div class="text-sm " x-data
                                 x-html="marked.parse($el.textContent.trim()).replace(/^<br>/, '')">
-                                {{ $message['content'] }}</p>
+                                {{ $message['content'] }}</div>
                         </div>
                     </div>
                 </div>
