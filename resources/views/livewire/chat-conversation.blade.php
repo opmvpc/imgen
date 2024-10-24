@@ -51,7 +51,7 @@
                             class="w-full prose {{ $message['role'] === 'user' ? 'bg-indigo-500 text-white' : 'bg-white' }} rounded-lg p-4 shadow break-words">
 
                             <p class="text-sm " x-data
-                                x-html="marked.parseInline($el.textContent.trim()).replace(/^<br>/, '')">
+                                x-html="marked.parse($el.textContent.trim()).replace(/^<br>/, '')">
                                 {{ $message['content'] }}</p>
                         </div>
                     </div>
