@@ -35,8 +35,10 @@ class ChatConversation extends Component
 
         // Charger les paramètres du projet
         if ($settings = $project->settings) {
-            $this->selectedModel = $settings->model;
+            $this->selectedModel = $settings->model ?? 'meta-llama/llama-3.2-11b-vision-instruct';
             $this->temperature = $settings->temperature;
+        } else {
+            $this->selectedModel = 'meta-llama/llama-3.2-11b-vision-instruct';
         }
     }
 
@@ -100,6 +102,19 @@ class ChatConversation extends Component
                 'role' => 'assistant',
                 'content' => $fullResponse,
             ]);
+
+            // Générer le titre après le premier échange complet
+            if (2 === count($this->messages) || 'Nouvelle conversation' === $this->project->name) {
+                try {
+                    $title = $openAIService->generateTitle($this->messages);
+                    $this->project->update(['name' => $title]);
+                } catch (\Exception $e) {
+                    logger()->error('Erreur lors de la mise à jour du titre:', [
+                        'message' => $e->getMessage(),
+                    ]);
+                    // On continue même si la génération du titre échoue
+                }
+            }
 
             $this->streamedResponse = '';
             $this->isStreaming = false;

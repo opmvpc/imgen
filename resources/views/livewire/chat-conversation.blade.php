@@ -2,6 +2,13 @@
     <!-- Sidebar -->
     <div class="w-1/4 bg-white border-r border-gray-100 fixed top-16 bottom-0 left-0 overflow-y-auto">
         <div class="p-4 space-y-4">
+            <!-- Ajout du titre -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 truncate">
+                    {{ $project->name }}
+                </h2>
+            </div>
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Modèle</label>
                 <div class="relative">
