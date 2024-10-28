@@ -1,6 +1,6 @@
 <div class="flex w-full">
     <!-- Sidebar -->
-    <div class="w-1/4 bg-white border-r border-gray-100 overflow-y-auto">
+    <div class="w-1/4 bg-white border-r border-gray-100 fixed top-16 bottom-0 left-0 overflow-y-auto">
         <div class="p-4 space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Modèle</label>
@@ -37,9 +37,10 @@
     </div>
 
     <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col bg-gray-50">
+    <div class="flex-1 flex flex-col bg-gray-50 ml-[25%] pt-16 pb-6" x-data="{ inputHeight: '2.5rem' }">
         <!-- Messages -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages">
+        <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages"
+            :style="'padding-bottom: calc(' + inputHeight + ' + 2rem)'">
             @foreach ($messages as $message)
                 <div class="flex {{ $message['role'] === 'user' ? 'justify-end' : 'justify-start' }}">
                     <div
@@ -76,7 +77,7 @@
         </div>
 
         <!-- Input Area -->
-        <div class="border-t border-gray-100 p-4 bg-white">
+        <div class="border-t border-gray-100 p-4 bg-white fixed bottom-0 right-0 left-[25%]">
             <form wire:submit.prevent="sendMessage" class="flex gap-4">
                 <div class="flex-1 space-y-2">
                     <textarea wire:model="newMessage" placeholder="Entrez votre message" rows="1"
@@ -90,6 +91,7 @@
                                 } else {
                                     $el.style.overflowY = 'hidden';
                                 }
+                                $dispatch('input-resized', { height: $el.style.height });
                             }
                         }" x-init="resize()"
                         @input="resize()" @keydown.ctrl.enter.prevent="$wire.sendMessage()"></textarea>
@@ -108,9 +110,15 @@
     document.addEventListener('livewire:initialized', () => {
         const streamingResponse = document.getElementById('streaming-response');
         const loadingIndicator = document.getElementById('loading-indicator');
-        const SCROLL_OFFSET = 100; // Offset en pixels
+        const chatMessages = document.getElementById('chat-messages');
+        const SCROLL_OFFSET = 100;
 
-        // Fonction de scroll avec offset
+        // Écouter les changements de hauteur de l'input
+        window.addEventListener('input-resized', (event) => {
+            chatMessages.style.paddingBottom = `calc(${event.detail.height} + 2rem)`;
+            scrollToBottom();
+        });
+
         const scrollToBottom = () => {
             window.scrollTo({
                 top: document.documentElement.scrollHeight + SCROLL_OFFSET,
@@ -118,14 +126,16 @@
             });
         };
 
-        // Scroll initial avec délai pour le formatage markdown
+        window.addEventListener('messageAdded', () => {
+            console.log('messageAdded');
+
+            setTimeout(scrollToBottom, 500);
+        });
+
         setTimeout(scrollToBottom, 500);
 
         const observer = new MutationObserver(() => {
-            // Scroll pendant le streaming
             scrollToBottom();
-
-            // Gestion du loader
             const hasContent = streamingResponse.textContent.trim().length > 0;
             loadingIndicator.style.display = hasContent ? 'none' : 'flex';
         });

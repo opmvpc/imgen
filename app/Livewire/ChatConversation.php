@@ -63,6 +63,8 @@ class ChatConversation extends Component
         // On lance la réponse après un court délai pour permettre l'affichage du message
         $this->dispatch('scroll-chat');
 
+        $this->dispatch('messageAdded');
+
         $this->js('$wire.getAiResponse()');
     }
 

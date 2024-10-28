@@ -11,6 +11,8 @@ class Message extends Model
 
     protected $fillable = ['content', 'role'];
 
+    protected $touches = ['project'];
+
     public function project()
     {
         return $this->belongsTo(Project::class);
