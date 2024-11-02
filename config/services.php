@@ -38,4 +38,11 @@ return [
         'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
         'api_key' => env('OPENROUTER_API_KEY'),
     ],
+
+    'replicate' => [
+        'token' => env('REPLICATE_API_TOKEN'),
+        'api_url' => env('REPLICATE_API_URL', 'https://api.replicate.com/v1'),
+        'webhook_enabled' => env('REPLICATE_WEBHOOK_ENABLED', false),
+        'webhook_url' => env('REPLICATE_WEBHOOK_URL'),
+    ],
 ];

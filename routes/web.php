@@ -2,6 +2,9 @@
 
 use App\Livewire\ChatConversation;
 use App\Livewire\ProjectList;
+use App\Livewire\Studio;
+use App\Models\Generation;
+use App\Services\ReplicateService;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
@@ -12,7 +15,14 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('chat', ['project' => auth()->user()->projects()->create(['name' => 'Nouvelle conversation'])]);
     })->name('chat.create');
     Route::get('/chat/{project}', ChatConversation::class)->name('chat');
+    Route::get('/studio', Studio::class)->name('studio');
+
+    Route::get('/replicate/check/{generation}', function (Generation $generation) {
+    $replicate = new ReplicateService();
+    return $replicate->getResult($generation->prediction_id);
 });
+});
+
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])
