@@ -53,13 +53,8 @@ class ReplicateService
 
         $model = $this->models[$modelName];
 
-        $headers = ['Content-Type' => 'application/json'];
-        if ($waitForResult) {
-            $headers['Prefer'] = 'wait=60'; // Attend max 60 secondes
-        }
-
+        // On n'attend jamais le résultat, on utilisera le polling à la place
         $response = $this->getHttpClient()
-            ->withHeaders($headers)
             ->post('predictions', [
                 'version' => $model->getVersion(),
                 'input' => $parameters,
@@ -109,7 +104,8 @@ class ReplicateService
     {
         return Http::withToken($this->apiToken)
             ->baseUrl($this->apiUrl)
-            ->timeout(65); // 65 secondes pour permettre l'attente de 60s + marge
+            ->timeout(10) // Timeout plus court pour la requête initiale
+            ->connectTimeout(5); // Timeout de connexion plus court
     }
 
     /**
@@ -143,5 +139,13 @@ class ReplicateService
     public function getAvailableModels(): array
     {
         return $this->models;
+    }
+
+    public function checkPrediction(string $predictionId): array
+    {
+        $response = $this->getHttpClient()
+            ->get("predictions/{$predictionId}");
+
+        return $this->handleResponse($response);
     }
 }

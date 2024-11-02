@@ -71,10 +71,8 @@ class Studio extends Component
 
             // Validation des paramètres
             $validationRules = $model->getValidationRules();
-
-            // On extrait les règles pour le prompt
             $promptRules = $validationRules['prompt'] ?? ['required', 'string', 'min:3'];
-            unset($validationRules['prompt']); // On retire le prompt des règles des paramètres
+            unset($validationRules['prompt']);
 
             $prefixedRules = array_combine(
                 array_map(fn($key) => "parameters.{$key}", array_keys($validationRules)),
@@ -126,6 +124,7 @@ class Studio extends Component
                     'status' => 'succeeded',
                     'image_url' => $result['output'][0] ?? null
                 ]);
+                $this->isGenerating = false;
             }
 
             if (isset($result['urls']['get'])) {
@@ -141,7 +140,6 @@ class Studio extends Component
             if ($this->currentGeneration) {
                 $this->currentGeneration->update(['status' => 'failed']);
             }
-        } finally {
             $this->isGenerating = false;
         }
     }
@@ -154,16 +152,18 @@ class Studio extends Component
         ]);
     }
 
-    public function handleGenerationCompleted($data)
+    public function handleGenerationCompleted(array $data = [])
     {
         $this->currentGeneration->refresh();
-        $this->isGenerating = false;
+        if ($this->currentGeneration->status === 'succeeded') {
+            $this->isGenerating = false;
+        }
     }
 
-    public function handleGenerationFailed($data)
+    public function handleGenerationFailed(array $data = [])
     {
         $this->currentGeneration->refresh();
         $this->isGenerating = false;
-        $this->addError('generation', 'La génération a échoué');
+        $this->addError('generation', 'La génération a échoué : ' . ($this->currentGeneration->result['error'] ?? 'Erreur inconnue'));
     }
 }
