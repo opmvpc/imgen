@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Generation;
 use App\Services\ReplicateService;
+use App\Services\ImageService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -155,9 +156,62 @@ class Studio extends Component
     public function handleGenerationCompleted(array $data = [])
     {
         $this->currentGeneration->refresh();
+
+        Log::info('Début du traitement de la génération', [
+            'generation_id' => $this->currentGeneration->id,
+            'status' => $this->currentGeneration->status,
+            'model' => $this->currentGeneration->model,
+            'result' => $this->currentGeneration->result
+        ]);
+
         if ($this->currentGeneration->status === 'succeeded') {
-            $this->isGenerating = false;
+            try {
+                $replicate = new ReplicateService();
+                $model = $replicate->getModel($this->currentGeneration->model);
+
+                // Extraction de l'URL selon le type de modèle
+                $imageUrl = $model->getOutputUrl($this->currentGeneration->result);
+
+                Log::info('URL extraite', [
+                    'url' => $imageUrl,
+                    'result' => $this->currentGeneration->result
+                ]);
+
+                if (!$imageUrl || !filter_var($imageUrl, FILTER_VALIDATE_URL)) {
+                    throw new \RuntimeException("URL d'image invalide: " . json_encode($this->currentGeneration->result));
+                }
+
+                // Mise à jour de l'URL de l'image
+                $this->currentGeneration->update([
+                    'image_url' => $imageUrl
+                ]);
+
+                // Téléchargement et sauvegarde de l'image
+                $imageService = app(ImageService::class);
+                $localPath = $imageService->downloadAndSave($imageUrl);
+
+                Log::info('Image téléchargée avec succès', [
+                    'generation_id' => $this->currentGeneration->id,
+                    'url' => $imageUrl,
+                    'local_path' => $localPath
+                ]);
+
+                // Mise à jour du chemin local
+                $this->currentGeneration->update([
+                    'local_image_path' => $localPath
+                ]);
+
+            } catch (\Exception $e) {
+                Log::error('Erreur lors de la sauvegarde de l\'image', [
+                    'generation_id' => $this->currentGeneration->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'current_result' => $this->currentGeneration->result
+                ]);
+            }
         }
+
+        $this->isGenerating = false;
     }
 
     public function handleGenerationFailed(array $data = [])

@@ -2,20 +2,19 @@
 
 namespace App\Services\Replicate\Models;
 
-use App\Services\Replicate\Contracts\ReplicateModelInterface;
 use App\Services\Replicate\DTOs\ModelConfig;
 use App\Services\Replicate\DTOs\Parameter;
 use App\Services\Replicate\Enums\ParameterType;
+use App\Services\Replicate\Enums\OutputType;
 
-class FluxModel implements ReplicateModelInterface
+class FluxModel extends AbstractReplicateModel
 {
-    private ModelConfig $config;
-
-    public function __construct()
+    protected function defineConfig(): ModelConfig
     {
-        $this->config = new ModelConfig(
+        return new ModelConfig(
             name: 'black-forest-labs/flux-1.1-pro',
-            version: '8beff3369e81422112d93b89ca01426147de542cd4684c244b673b105188fe5f',
+            version: '0s78r9y3tdrge0cjf05sxnjg8w',
+            outputType: OutputType::SINGLE_URI,
             parameters: [
                 new Parameter(
                     name: 'prompt',
@@ -127,33 +126,5 @@ class FluxModel implements ReplicateModelInterface
                 ),
             ]
         );
-    }
-
-    public function getName(): string
-    {
-        return $this->config->name;
-    }
-
-    public function getVersion(): string
-    {
-        return $this->config->version;
-    }
-
-    public function getParameters(): array
-    {
-        $parameters = $this->config->parameters;
-        usort($parameters, fn($a, $b) => $a->order <=> $b->order);
-        return $parameters;
-    }
-
-    public function validateParameters(array $input): bool
-    {
-        // TODO: Implémenter la validation
-        return true;
-    }
-
-    public function getValidationRules(): array
-    {
-        return $this->config->getValidationRules();
     }
 }

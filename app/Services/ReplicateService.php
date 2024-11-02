@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Services\Replicate\Contracts\ReplicateModelInterface;
 use App\Services\Replicate\Models\FluxModel;
+use App\Services\Replicate\Models\RecraftModel;
+use App\Services\Replicate\Models\StableDiffusionModel;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -28,7 +30,8 @@ class ReplicateService
 
         // Enregistrement des modèles disponibles
         $this->registerModel(new FluxModel());
-        // Ajouter d'autres modèles ici quand nécessaire
+        $this->registerModel(new RecraftModel());
+        $this->registerModel(new StableDiffusionModel());
     }
 
     private function registerModel(ReplicateModelInterface $model): void
@@ -53,12 +56,12 @@ class ReplicateService
 
         $model = $this->models[$modelName];
 
-        // On n'attend jamais le résultat, on utilisera le polling à la place
+        // Construction de l'URL avec le nom du modèle
+        $endpoint = "models/{$modelName}/predictions";
+
         $response = $this->getHttpClient()
-            ->post('predictions', [
-                'version' => $model->getVersion(),
+            ->post($endpoint, [
                 'input' => $parameters,
-                'webhook_completed' => Config::get('services.replicate.webhook_url'),
             ]);
 
         return $this->handleResponse($response);

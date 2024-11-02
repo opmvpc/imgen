@@ -27,7 +27,9 @@
                             <label class="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
                                 {{ ucfirst($parameter->name) }}
                                 @if ($parameter->description)
-                                    <x-tooltip :text="$parameter->description" />
+                                    <div class="relative z-[60]">
+                                        <x-tooltip :text="$parameter->description" />
+                                    </div>
                                 @endif
                             </label>
 
@@ -70,9 +72,9 @@
     </div>
 
     <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col bg-gray-50 ml-[25%] pt-16 pb-6" x-data="{ inputHeight: '2.5rem' }">
+    <div class="flex-1 flex flex-col bg-gray-50 ml-[25%] pt-16 pb-6 relative" x-data="{ inputHeight: '2.5rem' }">
         <!-- Zone d'affichage des images -->
-        <div class="flex-1 p-4 overflow-y-auto" id="generated-images">
+        <div class="flex-1 p-4 pb-24 overflow-y-auto flex items-center justify-center" id="generated-images">
             @if ($isGenerating)
                 <div class="flex items-center justify-center h-full">
                     <div class="relative" x-data="{
@@ -112,14 +114,12 @@
                 </div>
             @elseif($currentGeneration)
                 @if ($currentGeneration->status === 'succeeded' && $currentGeneration->image_url)
-                    <div class="relative group animate-fade-in">
-                        <img src="{{ $currentGeneration->image_url }}" alt="{{ $currentGeneration->prompt }}"
-                            class="max-w-full rounded-lg shadow-lg transition-transform duration-200 ease-in-out group-hover:scale-[1.01]">
-
-                        <div
-                            class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <p class="text-white">{{ $currentGeneration->prompt }}</p>
-                        </div>
+                    <div class="relative group animate-fade-in max-h-[calc(100vh-12rem)] flex items-center justify-center">
+                        <img src="{{ $currentGeneration->local_image_path
+                            ? Storage::url($currentGeneration->local_image_path)
+                            : $currentGeneration->image_url }}"
+                            alt="{{ $currentGeneration->prompt }}"
+                            class="h-full w-auto object-contain rounded-lg shadow-lg transition-transform duration-200 ease-in-out group-hover:scale-[1.01]">
                     </div>
                 @elseif($currentGeneration->status === 'failed')
                     <div class="p-4 bg-red-50 text-red-700 rounded-lg">
@@ -142,7 +142,7 @@
         </div>
 
         <!-- Zone de saisie -->
-        <div class="border-t border-gray-100 p-4 bg-white fixed bottom-0 right-0 left-[25%]">
+        <div class="border-t border-gray-100 p-4 bg-white fixed bottom-0 right-0 left-[25%] z-40">
             <form wire:submit.prevent="generate" class="flex gap-4">
                 <div class="flex-1">
                     <textarea wire:model="prompt" placeholder="Décrivez l'image que vous souhaitez générer..." rows="1"

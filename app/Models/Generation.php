@@ -16,6 +16,7 @@ class Generation extends Model
         'prediction_id',
         'status',
         'image_url',
+        'local_image_path',
         'result'
     ];
 

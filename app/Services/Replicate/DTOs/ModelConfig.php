@@ -3,6 +3,7 @@
 namespace App\Services\Replicate\DTOs;
 
 use App\Services\Replicate\Enums\ParameterType;
+use App\Services\Replicate\Enums\OutputType;
 
 class ModelConfig
 {
@@ -13,6 +14,7 @@ class ModelConfig
         public readonly string $name,
         public readonly string $version,
         public readonly array $parameters,
+        public readonly OutputType $outputType,
         public readonly ?string $description = null,
     ) {}
 
@@ -56,5 +58,13 @@ class ModelConfig
         }
 
         return $rules;
+    }
+
+    public function getOutputUrl(array $result): ?string
+    {
+        return match($this->outputType) {
+            OutputType::SINGLE_URI => $result['output'] ?? null,
+            OutputType::ARRAY_OF_URI => $result['output'][0] ?? null,
+        };
     }
 }
