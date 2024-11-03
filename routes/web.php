@@ -3,6 +3,7 @@
 use App\Livewire\ChatConversation;
 use App\Livewire\ProjectList;
 use App\Livewire\Studio;
+use App\Livewire\Gallery;
 use App\Models\Generation;
 use App\Services\ReplicateService;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('chat.create');
     Route::get('/chat/{project}', ChatConversation::class)->name('chat');
     Route::get('/studio', Studio::class)->name('studio');
+    Route::get('/gallery', Gallery::class)->name('gallery');
 
     Route::get('/replicate/check/{generation}', function (Generation $generation) {
         if ($generation->user_id !== auth()->id()) {

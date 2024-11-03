@@ -30,6 +30,9 @@ $logout = function (Logout $logout) {
                     <x-nav-link :href="route('studio')" :active="request()->routeIs('studio')">
                         {{ __('Studio') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('gallery')" :active="request()->routeIs('gallery')">
+                        {{ __('Galerie') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -92,6 +95,9 @@ $logout = function (Logout $logout) {
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('studio')" wire:navigate :active="request()->routeIs('studio')">
                 {{ __('Studio') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('gallery')" wire:navigate :active="request()->routeIs('gallery')">
+                {{ __('Galerie') }}
             </x-responsive-nav-link>
         </div>
 
